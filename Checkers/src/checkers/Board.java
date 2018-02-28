@@ -24,8 +24,6 @@ public class Board extends JPanel implements ActionListener{
     
     private static final Color DARK_BOARD_COLOR = new Color(100, 50, 0);
     private static final Color LIGHT_BOARD_COLOR = new Color(245, 222, 179);
-    private static final Color DARK_PIECE_COLOR = Color.BLACK;
-    private static final Color LIGHT_PIECE_COLOR = Color.RED;
     
     private Piece[][] pieces;
     
@@ -110,7 +108,7 @@ public class Board extends JPanel implements ActionListener{
     	}
     }
 
-    public static void initializeGui() {
+    public void initializeGui() {
         JFrame frame = new JFrame();
         frame.add(new Board());
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
