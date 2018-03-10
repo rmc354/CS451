@@ -25,9 +25,15 @@ public class Board extends JPanel implements ActionListener{
     private static final Color DARK_BOARD_COLOR = new Color(100, 50, 0);
     private static final Color LIGHT_BOARD_COLOR = new Color(245, 222, 179);
     
+    boolean pieceClicked = false;
+    boolean yourTurn;
+    boolean controlsRed;
+    
     private Piece[][] pieces;
     
-    Board() {
+    Board(boolean controlsRed, boolean goesFirst) {
+    	yourTurn = goesFirst;
+    	this.controlsRed = controlsRed;
     	pieces = new Piece[8][8];
     	for (int x = 0; x < 8; x++) {
     		// Fill in every dark space in the top 3 rows
@@ -67,23 +73,24 @@ public class Board extends JPanel implements ActionListener{
                 }
             }
         }
-        for (int x = 0; x < 8; x++) {
+        placePieces();
+    }
+    
+    private void placePieces() {
+    	System.out.println("placed");
+
+    	for (int x = 0; x < 8; x++) {
     		for (int y = 0; y < 8; y++) {
     			if (pieces[x][y] != null) {
     				try {
-    					removeExistingButton(x + "," + y);
-    					String imageSource = "";
-    					if (pieces[x][y].isRed && !pieces[x][y].isKinged) {
-    						imageSource = "RedPiece.gif";
-    					} else if (!pieces[x][y].isRed && !pieces[x][y].isKinged) {
-    						imageSource = "BlackPiece.gif";
-    					}
-    					// TODO implement king pieces
+    					String pieceName = "p" + x + "," + y;
+    					removeExistingButton(pieceName);
+    					String imageSource = pieces[x][y].getImageSource();
     					
     					Image img = ImageIO.read(getClass().getResource(imageSource));
     					JButton button = new JButton();
-	    				button.setName(x + "," + y);
-    					button.setActionCommand(x + "," + y);
+	    				button.setName(pieceName);
+    					button.setActionCommand(pieceName);
 	    				button.setLayout(null);
 	    				button.setBounds(x * SQ_SIZE + 2, y * SQ_SIZE + 2, SQ_SIZE - 4, SQ_SIZE - 4);
 	    				button.setIcon(new ImageIcon(img));
@@ -100,17 +107,26 @@ public class Board extends JPanel implements ActionListener{
     	}
     }
     
-    private void removeExistingButton(String pos) {
+    private void removeExistingButton(String regex) {
     	for (Component c : this.getComponents()) {
-    		if (c.getName().equals(pos)) {
+    		if (c.getName().matches(regex)) {
     			this.remove(c);
     		}
     	}
     }
-
+    
+    private boolean existsButtonThatMatches(String regex) {
+    	for (Component c : this.getComponents()) {
+    		if (c.getName().matches(regex)) {
+    			return true;
+    		}
+    	}
+    	return false;
+    }
+    
     public void initializeGui() {
         JFrame frame = new JFrame();
-        frame.add(new Board());
+        frame.add(new Board(controlsRed, yourTurn));
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(BOARD_SIDE, BOARD_SIDE);
         frame.setLocationByPlatform(true);
@@ -119,16 +135,164 @@ public class Board extends JPanel implements ActionListener{
         frame.setVisible(true);
         frame.setResizable(false);
     }
-
+    
     public Dimension getPreferredSize() {
         return new Dimension(BOARD_SIDE, BOARD_SIDE);
     }
-
+    
     public void setPieces(Piece[][] pieces) {
     	this.pieces = pieces;
     }
     
+    private void createPiece(int x, int y, String imageSource, String pieceName, Color color) {
+    	try {
+			removeExistingButton(pieceName);
+			
+			Image img = ImageIO.read(getClass().getResource(imageSource));
+			JButton button = new JButton();
+			button.setName(pieceName);
+			button.setActionCommand(pieceName);
+			button.setLayout(null);
+			button.setBounds(x * SQ_SIZE + 2, y * SQ_SIZE + 2, SQ_SIZE - 4, SQ_SIZE - 4);
+			button.setIcon(new ImageIcon(img));
+			button.setBackground(color);
+			button.setOpaque(true);
+			button.setBorderPainted(false);
+			button.addActionListener(this);
+			add(button);
+			repaint();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    }
+    
+    private void createMovePiece (int x, int y, int moveX, int moveY, boolean isLeftMove) {
+    	if (moveX >= 0 && moveX < 8 && moveY >= 0 && moveY < 8) {
+    		if (pieces[moveX][moveY] == null) {
+    			String pieceName = "m" + x + "," + y + ">" + moveX + "," + moveY;
+    			// used in the actionlistener to determine what piece was clicked and what to do
+    			
+    			createPiece(moveX, moveY, "MovePiece.gif", pieceName, DARK_BOARD_COLOR);
+    		} else {
+    			System.out.println(moveX + "," + moveY + " is NOT empty");
+    			if (pieces[moveX][moveY].isRed() != pieces[x][y].isRed()) { 
+    				// different colors
+    				
+    				if (isLeftMove) {
+    					int[] moves = pieces[x][y].getLeftMove(moveX, moveY);
+    					int jumpMoveX = moves[0];
+						int jumpMoveY = moves[1];
+						if (jumpMoveX >= 0 && jumpMoveX < 8 && jumpMoveY >= 0 && jumpMoveY < 8) {
+	    					if (((pieces[x][y].isRed() && moveY > y) || (pieces[x][y].isBlack() && moveY > y)) && moves.length > 2) {
+	    						// moving opposite left (king only)
+	    						jumpMoveX = moves[2];
+	    						jumpMoveY = moves[3];
+	    					}
+	    					if (pieces[jumpMoveX][jumpMoveY] == null) {
+	    		    			String pieceName = "j" + x + "," + y + ">" + jumpMoveX + "," + jumpMoveY;
+	    		    			createPiece(jumpMoveX, jumpMoveY, "MovePiece.gif", pieceName, DARK_BOARD_COLOR);
+							}
+						}
+    				} else {
+    					int[] moves = pieces[x][y].getRightMove(moveX, moveY);
+    					int jumpMoveX = moves[0];
+						int jumpMoveY = moves[1];
+						if (jumpMoveX >= 0 && jumpMoveX < 8 && jumpMoveY >= 0 && jumpMoveY < 8) {
+	    					if (((pieces[x][y].isRed() && moveY > y) || (pieces[x][y].isBlack() && moveY > y)) && moves.length > 2) {
+	    						// moving opposite right (king only)
+	    						jumpMoveX = moves[2];
+	    						jumpMoveY = moves[3];
+	    					}
+	    					if (pieces[jumpMoveX][jumpMoveY] == null) {
+	    		    			String pieceName = "j" + x + "," + y + ">" + jumpMoveX + "," + jumpMoveY;
+	    		    			createPiece(jumpMoveX, jumpMoveY, "MovePiece.gif", pieceName, DARK_BOARD_COLOR);
+							}
+						}
+    				}
+    			}
+    		}
+    	}
+    }
+    
+    private void clickPiece(String piece) {
+    	pieceClicked = true;
+    	String[] pos = piece.split(",");
+    	int x = Integer.parseInt(pos[0]);
+    	int y = Integer.parseInt(pos[1]);
+    	
+    	if (true) {	// comment this and uncomment next line to run for real
+    	//if (controlsRed == pieces[x][y].isRed() && !pieceClicked) {
+    		// only click correct color pieces
+    		
+	    	int[] leftMoves = pieces[x][y].getLeftMove(x, y);
+	    	createMovePiece(x, y, leftMoves[0], leftMoves[1], true);
+	    	if (leftMoves.length > 2) {
+	        	createMovePiece(x, y, leftMoves[2], leftMoves[3], true);
+	    	}
+	    	
+	    	int[] rightMoves = pieces[x][y].getRightMove(x, y);
+	    	createMovePiece(x, y, rightMoves[0], rightMoves[1], false);
+	    	if (rightMoves.length > 2) {
+	        	createMovePiece(x, y, rightMoves[2], rightMoves[3], false);
+	    	}
+	    	if (!existsButtonThatMatches("^m.*")) {
+	        	endTurn();
+	    	}
+    	}
+    }
+    
+    private void makeMove(String move, boolean isJumpMove) {
+    	pieceClicked = false;
+
+    	String[] positions = move.split(">");
+    	String[] start = positions[0].split(",");
+    	String[] moveTo = positions[1].split(",");
+    	int startX = Integer.parseInt(start[0]);
+    	int startY = Integer.parseInt(start[1]);
+    	int moveX = Integer.parseInt(moveTo[0]);
+    	int moveY = Integer.parseInt(moveTo[1]);
+
+    	System.out.println("move " + startX + "," + startY + " to " + moveX + "," + moveY);
+    	pieces[moveX][moveY] = pieces[startX][startY];
+    	pieces[startX][startY] = null;
+    	
+    	if (isJumpMove) {
+	    	int jumpOverX = (moveX + startX) / 2;
+	    	int jumpOverY = (moveY + startY) / 2;
+	    	pieces[jumpOverX][jumpOverY] = null;
+	    	removeExistingButton("p" + jumpOverX + "," + jumpOverY);
+    	}
+    	
+    	removeExistingButton("p" + startX + "," + startY);
+    	removeExistingButton("^m.*");
+    	removeExistingButton("^j.*");
+    	
+    	if ((pieces[moveX][moveY].isRed() && moveY == 0) || (pieces[moveX][moveY].isBlack() && moveY == 7)) {
+    		pieces[moveX][moveY].king();
+    	}
+    	
+    	repaint();
+    	endTurn();
+    }
+    
+    private void endTurn() {
+    	System.out.println("end turn");
+    	yourTurn = false;
+    	// no clue what should go here
+    }
+    
     public void actionPerformed(ActionEvent e) {
-    	System.out.println(e.getActionCommand());
+    	String command = e.getActionCommand();
+    	System.out.println(command);
+    	if (command.startsWith("p")) {
+    		// in format "p(x),(y)"
+    		clickPiece(command.replace('p', ' ').trim());
+    	} else if (command.startsWith("m")) {
+    		// in format "m(currentX),(currentY)>(newX),(newY)"
+    		makeMove(command.replace('m', ' ').trim(), false);
+    	} else if (command.startsWith("j")) {
+    		// in format "j(currentX),(currentY)>(newX),(newY)"
+    		makeMove(command.replace('j', ' ').trim(), true);
+    	}
     }
 }
