@@ -13,12 +13,8 @@ public class Player {
 		pieces = _pieces;
 	}
 	
-	public void selectPiece(Piece piece) {
-		
-	}
-	
-	public void movePiece(Piece piece, int[][] position) {
-		piece.setPosition(position);
+	public void movePiece(Piece piece, int _xPosition, int _yPosition) {
+		piece.setPosition(_xPosition, _yPosition);
 	}
 	
 	public void setPieces(ArrayList<Piece> _pieces) {
@@ -27,9 +23,5 @@ public class Player {
 	
 	public ArrayList<Piece> getPieces(){
 		return pieces;
-	}
-	
-	public void endTurn() {
-		
 	}
 }
