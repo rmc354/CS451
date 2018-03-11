@@ -28,6 +28,7 @@ public class Board extends JPanel implements ActionListener{
     boolean pieceClicked = false;
     boolean yourTurn;
     boolean controlsRed;
+    boolean lastMoveWasJump = false;
     
     private Piece[][] pieces;
     
@@ -168,14 +169,14 @@ public class Board extends JPanel implements ActionListener{
     
     private void createMovePiece (int x, int y, int moveX, int moveY, boolean isLeftMove) {
     	if (moveX >= 0 && moveX < 8 && moveY >= 0 && moveY < 8) {
-    		if (pieces[moveX][moveY] == null) {
+    		if (pieces[moveX][moveY] == null && !lastMoveWasJump) {
     			String pieceName = "m" + x + "," + y + ">" + moveX + "," + moveY;
     			// used in the actionlistener to determine what piece was clicked and what to do
     			
     			createPiece(moveX, moveY, "MovePiece.gif", pieceName, DARK_BOARD_COLOR);
     		} else {
     			System.out.println(moveX + "," + moveY + " is NOT empty");
-    			if (pieces[moveX][moveY].isRed() != pieces[x][y].isRed()) { 
+    			if (pieces[moveX][moveY]!=null && pieces[moveX][moveY].isRed() != pieces[x][y].isRed()) { 
     				// different colors
     				
     				if (isLeftMove) {
@@ -215,15 +216,33 @@ public class Board extends JPanel implements ActionListener{
     }
     
     private void clickPiece(String piece) {
-    	pieceClicked = true;
+
     	String[] pos = piece.split(",");
     	int x = Integer.parseInt(pos[0]);
     	int y = Integer.parseInt(pos[1]);
     	
-    	if (true) {	// comment this and uncomment next line to run for real
-    	//if (controlsRed == pieces[x][y].isRed() && !pieceClicked) {
+    	//if (true) {	// comment this and uncomment next line to run for real
+    	if (controlsRed == pieces[x][y].isRed() && yourTurn && !pieceClicked) {
     		// only click correct color pieces
-    		
+    		pieceClicked = true;
+	    	int[] leftMoves = pieces[x][y].getLeftMove(x, y);
+	    	createMovePiece(x, y, leftMoves[0], leftMoves[1], true);
+	    	if (leftMoves.length > 2) {
+	        	createMovePiece(x, y, leftMoves[2], leftMoves[3], true);
+	    	}
+	    	
+	    	int[] rightMoves = pieces[x][y].getRightMove(x, y);
+	    	createMovePiece(x, y, rightMoves[0], rightMoves[1], false);
+	    	if (rightMoves.length > 2) {
+	        	createMovePiece(x, y, rightMoves[2], rightMoves[3], false);
+	    	}
+	    	if (!existsButtonThatMatches("^m.*")) {
+	    		System.out.println("no moves");
+	        	endTurn();
+	    	}
+    	}
+    	else if(lastMoveWasJump) {
+    		pieceClicked = true;
 	    	int[] leftMoves = pieces[x][y].getLeftMove(x, y);
 	    	createMovePiece(x, y, leftMoves[0], leftMoves[1], true);
 	    	if (leftMoves.length > 2) {
@@ -238,6 +257,8 @@ public class Board extends JPanel implements ActionListener{
 	    	if (!existsButtonThatMatches("^m.*")) {
 	        	endTurn();
 	    	}
+    		lastMoveWasJump = false;
+    		
     	}
     }
     
@@ -261,6 +282,7 @@ public class Board extends JPanel implements ActionListener{
 	    	int jumpOverY = (moveY + startY) / 2;
 	    	pieces[jumpOverX][jumpOverY] = null;
 	    	removeExistingButton("p" + jumpOverX + "," + jumpOverY);
+	    	
     	}
     	
     	removeExistingButton("p" + startX + "," + startY);
@@ -269,15 +291,31 @@ public class Board extends JPanel implements ActionListener{
     	
     	if ((pieces[moveX][moveY].isRed() && moveY == 0) || (pieces[moveX][moveY].isBlack() && moveY == 7)) {
     		pieces[moveX][moveY].king();
+        	repaint();
+        	endTurn();
     	}
-    	
-    	repaint();
-    	endTurn();
+    	else if (isJumpMove) {
+    		repaint();
+    		lastMoveWasJump = true;
+    		clickPiece(moveX+","+moveY);
+    		controlsRed = !controlsRed;//comment out this line and uncomment the following once networking is implemented
+        	//yourTurn = false;
+    	}
+    	else {
+        	repaint();
+        	endTurn();
+    	}
+
     }
     
     private void endTurn() {
-    	System.out.println("end turn");
-    	yourTurn = false;
+    	lastMoveWasJump = false;
+    	pieceClicked = false;
+    	controlsRed = !controlsRed;//comment out this line and uncomment the following once networking is implemented
+    	//yourTurn = false;
+    	System.out.println("end turn\n"+controlsRed+" lastMoveWasJump: "+lastMoveWasJump);
+
+    	//pieceClicked = false;
     	// no clue what should go here
     }
     
