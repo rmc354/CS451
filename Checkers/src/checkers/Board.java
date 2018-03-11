@@ -40,13 +40,13 @@ public class Board extends JPanel implements ActionListener{
     		// Fill in every dark space in the top 3 rows
     		for (int y = 0; y < 3; y++) {
     			if (x % 2 == 0 && y % 2 == 1 || x % 2 == 1 && y % 2 == 0) {
-    				pieces[x][y] = new Piece(false);
+    				pieces[x][y] = new Piece(false, x, y);
     			}
     		}
     		// Fill in every dark space in the bottom 3 rows
     		for (int y = 7; y > 4; y--) {
     			if (x % 2 == 0 && y % 2 == 1 || x % 2 == 1 && y % 2 == 0) {
-    				pieces[x][y] = new Piece(true);
+    				pieces[x][y] = new Piece(true, x, y);
     			}
     		}
     	}
@@ -275,6 +275,7 @@ public class Board extends JPanel implements ActionListener{
 
     	System.out.println("move " + startX + "," + startY + " to " + moveX + "," + moveY);
     	pieces[moveX][moveY] = pieces[startX][startY];
+    	pieces[moveX][moveY].setPosition(moveX, moveY);
     	pieces[startX][startY] = null;
     	
     	if (isJumpMove) {

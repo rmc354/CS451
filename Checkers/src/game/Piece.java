@@ -23,16 +23,8 @@ public class Piece{
 	public boolean hasValidMove() {
 		Piece[][] board = gameBoard.getBoard();
 		if(isKing) {
-			if(xPosition == 0 && yPosition == 0) {
-				if(board[xPosition + 1][yPosition + 1] != null) {
-					return true;
-				}
-				else {
-					return false;
-				}
-			}
-			else if(xPosition == 0) {
-				if(board[xPosition + 1][yPosition - 1] != null || board[xPosition + 1][yPosition + 1] != null) {
+			if(xPosition == 0) {
+				if(board[xPosition + 1][yPosition - 1] == null || board[xPosition + 1][yPosition + 1] == null) {
 					return true;
 				}
 				else {
@@ -55,19 +47,37 @@ public class Piece{
 			}
 		}
 		else {
-			if(xPosition == 0) {
-				if(board[xPosition + 1][yPosition - 1] != null) {
+			if(isRed) {
+				if(xPosition == 0) {
+					if(board[xPosition + 1][yPosition - 1] != null) {
+						return true;
+					}
+					else {
+						return false;
+					}
+				}
+				else if(board[xPosition + 1][yPosition - 1] != null || board[xPosition - 1][yPosition - 1] != null) {
 					return true;
 				}
 				else {
 					return false;
 				}
 			}
-			else if(board[xPosition + 1][yPosition - 1] != null || board[xPosition - 1][yPosition - 1] != null) {
-				return true;
-			}
 			else {
-				return false;
+				if(xPosition == 0) {
+					if(board[xPosition + 1][yPosition + 1] != null) {
+						return true;
+					}
+					else {
+						return false;
+					}
+				}
+				else if(board[xPosition + 1][yPosition + 1] != null || board[xPosition - 1][yPosition + 1] != null) {
+					return true;
+				}
+				else {
+					return false;
+				}
 			}
 		}
 	}
