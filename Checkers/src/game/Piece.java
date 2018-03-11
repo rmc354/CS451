@@ -5,12 +5,14 @@ public class Piece{
 	private boolean isKing;
 	private boolean hasMove;
 	private Gameboard gameBoard;
-	private int[][] position;
+	private int xPosition;
+	private int yPosition;
 	
-	public Piece(boolean _isRed,boolean _isKing, int[][] _position, Gameboard _gameBoard) {
+	public Piece(boolean _isRed,boolean _isKing, int _xPosition, int _yPosition, Gameboard _gameBoard) {
 		isRed = _isRed;
 		isKing = _isKing;
-		position = _position;
+		xPosition = _xPosition;
+		yPosition = _yPosition;
 		gameBoard = _gameBoard;
 	}
 	
@@ -19,14 +21,64 @@ public class Piece{
 	}
 	
 	public boolean hasValidMove() {
-		return true;
+		Piece[][] board = gameBoard.getBoard();
+		if(isKing) {
+			if(xPosition == 0 && yPosition == 0) {
+				if(board[xPosition + 1][yPosition + 1] != null) {
+					return true;
+				}
+				else {
+					return false;
+				}
+			}
+			else if(xPosition == 0) {
+				if(board[xPosition + 1][yPosition - 1] != null || board[xPosition + 1][yPosition + 1] != null) {
+					return true;
+				}
+				else {
+					return false;
+				}
+			}
+			else if(yPosition == 0) {
+				if(board[xPosition + 1][yPosition + 1] != null || board[xPosition - 1][yPosition + 1] != null) {
+					return true;
+				}
+				else {
+					return false;
+				}
+			}
+			else if(board[xPosition + 1][yPosition - 1] != null || board[xPosition - 1][yPosition - 1] != null || board[xPosition + 1][yPosition + 1] != null || board[xPosition - 1][yPosition + 1] != null) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		else {
+			if(xPosition == 0) {
+				if(board[xPosition + 1][yPosition - 1] != null) {
+					return true;
+				}
+				else {
+					return false;
+				}
+			}
+			else if(board[xPosition + 1][yPosition - 1] != null || board[xPosition - 1][yPosition - 1] != null) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
 	}
 	
-	public void setPosition(int[][] _position) {
-		position = _position;
+	public void setPosition(int _xPosition, int _yPosition) {
+		xPosition = _xPosition;
+		yPosition = _yPosition;
 	}
 	
-	public int[][] getPosition(){
+	public String getPosition(){
+		String position = "X: " + xPosition + " Y: " + yPosition;
 		return position;
 	}
 }

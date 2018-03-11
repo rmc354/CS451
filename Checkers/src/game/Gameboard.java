@@ -3,19 +3,19 @@ package game;
 import java.util.ArrayList;
 
 public class Gameboard {
-	private int[][] board;
+	private Piece[][] board;
 	private ArrayList<Piece> pieces;
 	
-	public Gameboard(int[][] _board, ArrayList<Piece> _pieces) {
+	public Gameboard(Piece[][] _board, ArrayList<Piece> _pieces) {
 		board = _board;
 		pieces = _pieces;
 	}
 	
-	public void setBoard(int[][] _board) {
+	public void setBoard(Piece[][] _board) {
 		board = _board;
 	}
 	
-	public int[][] getBoard(){
+	public Piece[][] getBoard(){
 		return board;
 	}
 	
