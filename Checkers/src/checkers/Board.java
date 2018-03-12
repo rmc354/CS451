@@ -32,7 +32,7 @@ import javax.xml.ws.Response;
 
 import network.Login;
 
-public class Board extends JPanel implements ActionListener, Serializable, Runnable{
+public class Board extends JPanel implements ActionListener, Serializable{
 	
     private static final int BOARD_SIDE = 800;
     private static final int SQ_SIZE = 100;
@@ -47,33 +47,9 @@ public class Board extends JPanel implements ActionListener, Serializable, Runna
     
     private Piece[][] pieces;
     
-    private static Socket socket;
-    private BufferedReader in;
-    private PrintWriter out;
-    protected static Login l = new Login();
-    private static String server;
-    private static int PORT;
-    private PrintStream ps;
-    private ObjectInputStream is;
-    private ObjectOutputStream os;
-    private Thread runner = null;
-    
-    public Board(boolean controlsRed, boolean goesFirst, String server, int PORT) throws UnknownHostException, IOException {
+    public Board(boolean controlsRed, boolean goesFirst) {
     	yourTurn = goesFirst;
     	this.controlsRed = controlsRed;
-    	Board.server = server;
-    	Board.PORT = PORT;
-    	socket = new Socket(server, PORT);
-    	//os = new ObjectOutputStream(socket.getOutputStream());
-    	//in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-    	//out = new PrintWriter(socket.getOutputStream(), true);
-    	//is = new ObjectInputStream(socket.getInputStream());
-    	//ps = new PrintStream(socket.getOutputStream(), true);
-		OutputStream oos = socket.getOutputStream();
-		os = new ObjectOutputStream(oos);
-		InputStream iis = socket.getInputStream();
-		is = new ObjectInputStream(iis);
-		this.start();
     	
     	pieces = new Piece[8][8];
     	for (int x = 0; x < 8; x++) {
@@ -90,12 +66,6 @@ public class Board extends JPanel implements ActionListener, Serializable, Runna
     			}
     		}
     	}
-    }
-    
-    public void start()
-    {
-    	runner = new Thread(this);
-    	runner.start();
     }
     
     @Override
@@ -131,6 +101,7 @@ public class Board extends JPanel implements ActionListener, Serializable, Runna
     			if (pieces[x][y] != null) {
     				try {
     					String pieceName = "p" + x + "," + y;
+    					System.out.print(x + "," + y + " - ");
     					removeExistingButton(pieceName);
     					String imageSource = pieces[x][y].getImageSource();
     					
@@ -149,6 +120,9 @@ public class Board extends JPanel implements ActionListener, Serializable, Runna
     				} catch (IOException e) {
 						e.printStackTrace();
 					}
+    			} else {
+    				String pieceName = "p" + x + "," + y;
+					removeExistingButton(pieceName);
     			}
     		}
     	}
@@ -265,7 +239,7 @@ public class Board extends JPanel implements ActionListener, Serializable, Runna
     	}
     }
     
-    private void jumpAgain(String piece) throws IOException {
+    private void jumpAgain(String piece) {
     	
     	String[] pos = piece.split(",");
     	int x = Integer.parseInt(pos[0]);
@@ -285,18 +259,9 @@ public class Board extends JPanel implements ActionListener, Serializable, Runna
         	createMovePiece(x, y, rightMoves[2], rightMoves[3], false);
     	}
     	
-    	if (!existsButtonThatMatches("^j.*")) {
-    		//controlsRed = !controlsRed;//comment out this line and uncomment the following once networking is implemented
-        	//yourTurn = false;
-        	endTurn();
-        	return;
-	    }
-    	else {
-    		//controlsRed = !controlsRed;//comment out this line and uncomment the following once networking is implemented
-    		endTurn();
-    	}
+    	endTurn();
     }
-    private void clickPiece(String piece) throws IOException {
+    private void clickPiece(String piece) {
 
     	String[] pos = piece.split(",");
     	int x = Integer.parseInt(pos[0]);
@@ -325,7 +290,7 @@ public class Board extends JPanel implements ActionListener, Serializable, Runna
     	}
     }
     
-    private void makeMove(String move, boolean isJumpMove) throws IOException {
+    private void makeMove(String move, boolean isJumpMove) {
     	pieceClicked = false;
 
     	String[] positions = move.split(">");
@@ -373,165 +338,89 @@ public class Board extends JPanel implements ActionListener, Serializable, Runna
 
     }
     
-    private void endTurn() throws IOException {
+    private void endTurn() {
     	if(lastMoveWasJump) {
     		pieceClicked = false;
     		lastMoveWasJump = false;
     		return;
     	}
     	pieceClicked = false;
-    	controlsRed = !controlsRed;//comment out this line and uncomment the following once networking is implemented
-    	//yourTurn = false;
+    	yourTurn = false;
     	System.out.println("end turn\n"+controlsRed+" lastMoveWasJump: "+lastMoveWasJump);
-    	//System.out.println(is.available());
     	repaint();
-
-    	// no clue what should go here
     }
+    
     public void actionPerformed(ActionEvent e) {
     	String command = e.getActionCommand();
     	System.out.println(command);
-    	String response;
 
-				//p = (Piece[][]) is.readObject();
-				//p = (Piece[][]) is.readObject();
-				//System.out.println(p);
-		    	if (command.startsWith("p")) {
-		    		// in format "p(x),(y)"
-		    		try {
-						clickPiece(command.replace('p', ' ').trim());
-					} catch (IOException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-		    	} else if (command.startsWith("m")) {
-		    		// in format "m(currentX),(currentY)>(newX),(newY)"
-		    		try {
-						makeMove(command.replace('m', ' ').trim(), false);
-					} catch (IOException e2) {
-						// TODO Auto-generated catch block
-						e2.printStackTrace();
-					}
-
-					
-
-
-		    	} else if (command.startsWith("j")) {
-		    		// in format "j(currentX),(currentY)>(newX),(newY)"
-		    		try {
-						makeMove(command.replace('j', ' ').trim(), true);
-					} catch (IOException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-		    	}
-    		
-    	}
-
-
-    
-    
-    public void play() throws IOException
-    {
-    	String response;
-    	
-    	while(true)
-    	{
-    		response = in.readLine();
-    		System.out.println(response);
-    		if(response.startsWith("VALIDM"))
-    		{
-    			//b.actionPerformed();
-    			repaint();
-    		}
-    		else if (response.startsWith("VALIDP"))
-    		{
-    			
-    		}
-    		//out.println(response);
-    		//System.out.println(response);
-    	}
-    	
-    }
-    
-    public void log() throws IOException, ClassNotFoundException
-    {
-    		//pieces = piece;
-//    		if(is.available()!=0)
-//    		{
-//    			pieces = (Piece[][]) is.readObject();
-//    			repaint();
-//    		}
-    	
-    	
-//    	response = in.readLine();
-//
-//    	if(response.startsWith("PASS"))
-//    	{
-//    		
-//    		l.cPass = response;
-//    		l.confirmPass();
-//    		System.out.println("WORKS");
-//    		if(response.equals("VALIDM"))
-//    		{
-//    			
-//    		}
-//    		//play();
-//    	}
-//    	else if(response.startsWith("p"))
-//    	{
-//    		System.out.println(response);
-//    		clickPiece(response);
-//    	}
-//    	else if (response.startsWith("m"))
-//    	{
-//    		makeMove(response, false);
-//    	}
-//    	else if (response.startsWith("j"))
-//    	{
-//    		makeMove(response, true);
-//    	}
-    	
-    	
-//    	while(true)
-//    	{
-//    		response = in.readLine();
-//    		if(response.startsWith("PASS"))
-//    		{
-//    			
-//    		}
-//    		out.println(response);
-//    		//System.out.println(response);
-//    	}
-    }
-    
-    public void playAgain()
-    {
-    	
-    }
-    public synchronized void run()
-    {
-    	while(true)
-    	{
-    		System.out.println("hello");
-    		Piece[][] pieces;
-			try {
-				System.out.println(this.pieces);
-				pieces = (Piece[][]) is.readObject();
-	    		this.pieces = pieces;
-	    		repaint();
-			} catch (ClassNotFoundException | IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
+    	if (command.startsWith("p")) {
+    		// in format "p(x),(y)"
+			clickPiece(command.replace('p', ' ').trim());
+    	} else if (command.startsWith("m")) {
+    		// in format "m(currentX),(currentY)>(newX),(newY)"
+			makeMove(command.replace('m', ' ').trim(), false);
+    	} else if (command.startsWith("j")) {
+    		// in format "j(currentX),(currentY)>(newX),(newY)"
+			makeMove(command.replace('j', ' ').trim(), true);
     	}
     }
 
-	public static void main(String[] args) throws UnknownHostException, IOException {
-		// TODO Auto-generated method stub
-		l.Screen();
-		System.out.println(server);
-		//Board.initializeGui();
+	public boolean getControlsRed() {
+		return controlsRed;
 	}
+    
+    public boolean getYourTurn() {
+    	return yourTurn;
+    }
+    
+    public void yourTurn() {
+    	yourTurn = true;
+    }
+    
+    public Piece[][] getPieces() {
+    	return pieces;
+    }
+    
+    public boolean gameOver() {
+    	boolean redNoMoves = false;
+    	boolean blackNoMoves = false;
+    	boolean hasRedPiece = false;
+    	boolean hasBlackPiece = false;
+    	for (Piece[] row : pieces) {
+    		for (Piece piece : row) {
+    			if (piece != null) {
+    				if (piece.isRed()) {
+    					hasRedPiece = true;
+    				} else {
+    					hasBlackPiece = true;
+    				}
+    				if (!piece.hasValidMove(pieces)) {
+    					if (piece.isRed()) {
+    						redNoMoves = false;
+    					} else {
+    						blackNoMoves = false;
+    					}
+    				}
+    			}
+    		}
+			if (redNoMoves && blackNoMoves) {
+	    		System.out.println("Its a tie");
+	    		return true;
+	    	} else if (redNoMoves || !hasRedPiece) {
+	    		System.out.println("Black wins");
+	    		return true;
+	    	} else if (blackNoMoves || !hasBlackPiece) {
+	    		System.out.println("Red wins");
+	    		return true;
+	    	}
+    	}
+    	return false;
+    }
+
+	public void refresh() {
+		repaint();
+    	System.out.println("refreshed");
+	}
+    
 }

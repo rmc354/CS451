@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.ServerSocket;
 import java.util.Scanner;
-import game.Gameboard;
 
 public class Server{
 	
@@ -25,8 +24,7 @@ public class Server{
         System.out.println("Checkers Server Is Running");
         System.out.println(Inet4Address.getLocalHost().getHostAddress());
         try {
-        	while (true)
-        	{
+        	while (true) {
         		Auth p1 = new Auth(listener.accept());
         		Auth p2 = new Auth(listener.accept());
         		p1.start();
@@ -39,12 +37,9 @@ public class Server{
 //                black.start();
 //                red.start();
         	}
-        } finally
-        {
+        } finally {
         	listener.close();
         }
-
-
 	}
 
 }

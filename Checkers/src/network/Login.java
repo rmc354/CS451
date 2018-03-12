@@ -30,7 +30,7 @@ public class Login implements ActionListener{
 	private JFrame frame = new JFrame("Login");
 	
     private JPanel panel = new JPanel();
-    private JLabel l = new JLabel("label");
+    //private JLabel l = new JLabel("label");
     private JPanel jPanel = new JPanel();
 	public String cPass;
 	public char user;
@@ -78,8 +78,8 @@ public class Login implements ActionListener{
         frame.setVisible(false);
         hFrame.setVisible(false);
         //cPass = s.auth.getPass();
-        Board board = new Board(true, true, ip, Integer.parseInt(port));
-        board.initializeGui(board);
+        //Board board = new Board(true, true, ip, Integer.parseInt(port));
+        //board.initializeGui(board);
         //board.log();
 		
 		
@@ -110,8 +110,8 @@ public class Login implements ActionListener{
         jFrame.setVisible(false);
 	    String ip = JOptionPane.showInputDialog(null, "Enter IP Address", JOptionPane.QUESTION_MESSAGE);
 	    String port = JOptionPane.showInputDialog(null, "Enter Port Number", JOptionPane.QUESTION_MESSAGE);
-        Board board = new Board(true, true, ip, Integer.parseInt(port));
-        board.initializeGui(board);
+        //Board board = new Board(true, true, ip, Integer.parseInt(port));
+        //board.initializeGui(board);
         //board.log();
 	    //confirmPass();
 	   // System.out.println(auth.getPass());
