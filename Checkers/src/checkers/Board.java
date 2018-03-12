@@ -3,8 +3,10 @@ package checkers;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
@@ -26,6 +28,7 @@ import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.xml.ws.Response;
@@ -34,7 +37,9 @@ import network.Login;
 
 public class Board extends JPanel implements ActionListener, Serializable{
 	
-    private static final int BOARD_SIDE = 800;
+    private String version = "1.01";
+	
+    private static final int BOARD_SIDE = 850;
     private static final int SQ_SIZE = 100;
     
     private static final Color DARK_BOARD_COLOR = new Color(100, 50, 0);
@@ -47,9 +52,27 @@ public class Board extends JPanel implements ActionListener, Serializable{
     
     private Piece[][] pieces;
     
+    private JLabel versionText;
+    private JLabel turnText;
+    
     public Board(boolean controlsRed, boolean goesFirst) {
     	yourTurn = goesFirst;
     	this.controlsRed = controlsRed;
+    	
+    	this.setLayout(null);
+    	
+    	versionText = new JLabel();
+        versionText.setBounds(0, 810, 200, 40);
+        versionText.setText("Version : " + version);
+        add(versionText);
+        
+        turnText = new JLabel();
+        turnText.setBounds(200, 810, 600, 40);
+        String color = controlsRed ? "Red" : "Black";
+        String turn = yourTurn ? "" : "not ";
+        turnText.setText("You are " + color + "   Currently " + turn + "your turn");
+        turnText.setFont(new Font(turnText.getName(), Font.PLAIN, 20));
+        add(turnText);
     	
     	pieces = new Piece[8][8];
     	for (int x = 0; x < 8; x++) {
@@ -70,15 +93,20 @@ public class Board extends JPanel implements ActionListener, Serializable{
     
     @Override
     protected void paintComponent(Graphics g) {
+    	
+    	String color = controlsRed ? "Red" : "Black";
+        String turn = yourTurn ? "" : "not ";
+        turnText.setText("You are " + color + "   Currently " + turn + "your turn");
+    	
         super.paintComponent(g);
         boolean dark = true;
-        for (int i = 0; i < BOARD_SIDE; i += SQ_SIZE) {
+        for (int i = 0; i < SQ_SIZE * 8; i += SQ_SIZE) {
             if (dark) {
             	dark = false;
             } else {
             	dark = true;
             }
-            for (int j = 0; j < BOARD_SIDE; j += SQ_SIZE) {
+            for (int j = 0; j < SQ_SIZE * 8; j += SQ_SIZE) {
                 if (dark) {
                     g.setColor(DARK_BOARD_COLOR);
                     g.fillRect(j, i, SQ_SIZE, SQ_SIZE);
@@ -90,6 +118,7 @@ public class Board extends JPanel implements ActionListener, Serializable{
                 }
             }
         }
+        
         placePieces();
     }
     
@@ -130,23 +159,26 @@ public class Board extends JPanel implements ActionListener, Serializable{
     
     private void removeExistingButton(String regex) {
     	for (Component c : this.getComponents()) {
-    		if (c.getName().matches(regex)) {
-    			this.remove(c);
+    		try {
+				if (c.getName().matches(regex)) {
+					this.remove(c);
+				}
+    		} catch (NullPointerException e) {
+    			
     		}
     	}
     }
     
     private boolean existsButtonThatMatches(String regex) {
     	for (Component c : this.getComponents()) {
-    		if (c.getName().matches(regex)) {
+    		if (c.getName() != null && c.getName().matches(regex)) {
     			return true;
     		}
     	}
     	return false;
     }
     
-    public void initializeGui(Board board) throws UnknownHostException, IOException {
-    	System.out.println("WORKS");
+    public void initializeGui(Board board) throws UnknownHostException, IOException {        
         JFrame frame = new JFrame();
         frame.add(board);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -193,12 +225,12 @@ public class Board extends JPanel implements ActionListener, Serializable{
     	if (moveX >= 0 && moveX < 8 && moveY >= 0 && moveY < 8) {
     		if (pieces[moveX][moveY] == null ) {
     			if(!lastMoveWasJump) {
-    			String pieceName = "m" + x + "," + y + ">" + moveX + "," + moveY;
-    			// used in the actionlistener to determine what piece was clicked and what to do
-    			
-    			createPiece(moveX, moveY, "MovePiece.gif", pieceName, DARK_BOARD_COLOR);
-    		} 
-    			}else {
+	    			String pieceName = "m" + x + "," + y + ">" + moveX + "," + moveY;
+	    			// used in the actionlistener to determine what piece was clicked and what to do
+	    			
+	    			createPiece(moveX, moveY, "MovePiece.gif", pieceName, DARK_BOARD_COLOR);
+	    		}
+    		} else {
     			System.out.println(moveX + "," + moveY + " is NOT empty");
     			if (pieces[moveX][moveY]!=null && pieces[moveX][moveY].isRed() != pieces[x][y].isRed()) { 
     				// different colors
@@ -311,7 +343,6 @@ public class Board extends JPanel implements ActionListener, Serializable{
 	    	int jumpOverY = (moveY + startY) / 2;
 	    	pieces[jumpOverX][jumpOverY] = null;
 	    	removeExistingButton("p" + jumpOverX + "," + jumpOverY);
-	    	
     	}
     	
     	removeExistingButton("p" + startX + "," + startY);
