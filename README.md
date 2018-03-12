@@ -1,8 +1,8 @@
 # CS451
 
-Release Notes
+## Release Notes
 
-  Version 1.02 <br />
+###  Version 1.02 <br />
     -Updated interface for server <br />
     -Updated interface for client <br />
     -Client correctly displays new movement to both players <br />
@@ -13,7 +13,7 @@ Release Notes
     -Display Users turn and version at bottom of screen <br />
  
  
-  Version 1.01 <br />
+###  Version 1.01 <br />
     -Added Checkers board <br /> 
     -Added password for Login Screen <br />
     -Added About that displays version information <br />
@@ -23,7 +23,7 @@ Release Notes
     -Server is stable and can host two users <br />
     -IP Address functionality <br />
     
- Version 1.00 <br />
+###  Version 1.00 <br />
     -Login Screen implemented <br />
     -Host Button implemented <br />
     -Join Game Button implemented <br />
