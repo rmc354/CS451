@@ -7,8 +7,20 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.Serializable;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -16,8 +28,11 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import javax.xml.ws.Response;
 
-public class Board extends JPanel implements ActionListener{
+import network.Login;
+
+public class Board extends JPanel implements ActionListener, Serializable, Runnable{
 	
     private static final int BOARD_SIDE = 800;
     private static final int SQ_SIZE = 100;
@@ -26,30 +41,61 @@ public class Board extends JPanel implements ActionListener{
     private static final Color LIGHT_BOARD_COLOR = new Color(245, 222, 179);
     
     boolean pieceClicked = false;
-    boolean yourTurn;
-    boolean controlsRed;
+    static boolean yourTurn;
+    static boolean controlsRed;
     boolean lastMoveWasJump = false;
     
     private Piece[][] pieces;
     
-    public Board(boolean controlsRed, boolean goesFirst) {
+    private static Socket socket;
+    private BufferedReader in;
+    private PrintWriter out;
+    protected static Login l = new Login();
+    private static String server;
+    private static int PORT;
+    private PrintStream ps;
+    private ObjectInputStream is;
+    private ObjectOutputStream os;
+    private Thread runner = null;
+    
+    public Board(boolean controlsRed, boolean goesFirst, String server, int PORT) throws UnknownHostException, IOException {
     	yourTurn = goesFirst;
     	this.controlsRed = controlsRed;
+    	Board.server = server;
+    	Board.PORT = PORT;
+    	socket = new Socket(server, PORT);
+    	//os = new ObjectOutputStream(socket.getOutputStream());
+    	//in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+    	//out = new PrintWriter(socket.getOutputStream(), true);
+    	//is = new ObjectInputStream(socket.getInputStream());
+    	//ps = new PrintStream(socket.getOutputStream(), true);
+		OutputStream oos = socket.getOutputStream();
+		os = new ObjectOutputStream(oos);
+		InputStream iis = socket.getInputStream();
+		is = new ObjectInputStream(iis);
+		this.start();
+    	
     	pieces = new Piece[8][8];
     	for (int x = 0; x < 8; x++) {
     		// Fill in every dark space in the top 3 rows
     		for (int y = 0; y < 3; y++) {
     			if (x % 2 == 0 && y % 2 == 1 || x % 2 == 1 && y % 2 == 0) {
-    				pieces[x][y] = new Piece(false, x, y);
+    				pieces[x][y] = new Piece(false,x,y);
     			}
     		}
     		// Fill in every dark space in the bottom 3 rows
     		for (int y = 7; y > 4; y--) {
     			if (x % 2 == 0 && y % 2 == 1 || x % 2 == 1 && y % 2 == 0) {
-    				pieces[x][y] = new Piece(true, x, y);
+    				pieces[x][y] = new Piece(true,x,y);
     			}
     		}
     	}
+    }
+    
+    public void start()
+    {
+    	runner = new Thread(this);
+    	runner.start();
     }
     
     @Override
@@ -125,9 +171,10 @@ public class Board extends JPanel implements ActionListener{
     	return false;
     }
     
-    public void initializeGui() {
+    public void initializeGui(Board board) throws UnknownHostException, IOException {
+    	System.out.println("WORKS");
         JFrame frame = new JFrame();
-        frame.add(new Board(controlsRed, yourTurn));
+        frame.add(board);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(BOARD_SIDE, BOARD_SIDE);
         frame.setLocationByPlatform(true);
@@ -135,6 +182,7 @@ public class Board extends JPanel implements ActionListener{
         frame.pack();
         frame.setVisible(true);
         frame.setResizable(false);
+        System.out.println(pieces);
     }
     
     public Dimension getPreferredSize() {
@@ -217,7 +265,7 @@ public class Board extends JPanel implements ActionListener{
     	}
     }
     
-    private void jumpAgain(String piece) {
+    private void jumpAgain(String piece) throws IOException {
     	
     	String[] pos = piece.split(",");
     	int x = Integer.parseInt(pos[0]);
@@ -248,7 +296,7 @@ public class Board extends JPanel implements ActionListener{
     		endTurn();
     	}
     }
-    private void clickPiece(String piece) {
+    private void clickPiece(String piece) throws IOException {
 
     	String[] pos = piece.split(",");
     	int x = Integer.parseInt(pos[0]);
@@ -277,7 +325,7 @@ public class Board extends JPanel implements ActionListener{
     	}
     }
     
-    private void makeMove(String move, boolean isJumpMove) {
+    private void makeMove(String move, boolean isJumpMove) throws IOException {
     	pieceClicked = false;
 
     	String[] positions = move.split(">");
@@ -325,7 +373,7 @@ public class Board extends JPanel implements ActionListener{
 
     }
     
-    private void endTurn() {
+    private void endTurn() throws IOException {
     	if(lastMoveWasJump) {
     		pieceClicked = false;
     		lastMoveWasJump = false;
@@ -335,36 +383,155 @@ public class Board extends JPanel implements ActionListener{
     	controlsRed = !controlsRed;//comment out this line and uncomment the following once networking is implemented
     	//yourTurn = false;
     	System.out.println("end turn\n"+controlsRed+" lastMoveWasJump: "+lastMoveWasJump);
+    	//System.out.println(is.available());
+    	repaint();
 
     	// no clue what should go here
     }
-    
     public void actionPerformed(ActionEvent e) {
     	String command = e.getActionCommand();
     	System.out.println(command);
-    	if (command.startsWith("p")) {
-    		// in format "p(x),(y)"
-    		clickPiece(command.replace('p', ' ').trim());
-    	} else if (command.startsWith("m")) {
-    		// in format "m(currentX),(currentY)>(newX),(newY)"
-    		makeMove(command.replace('m', ' ').trim(), false);
-    	} else if (command.startsWith("j")) {
-    		// in format "j(currentX),(currentY)>(newX),(newY)"
-    		makeMove(command.replace('j', ' ').trim(), true);
+    	String response;
+
+				//p = (Piece[][]) is.readObject();
+				//p = (Piece[][]) is.readObject();
+				//System.out.println(p);
+		    	if (command.startsWith("p")) {
+		    		// in format "p(x),(y)"
+		    		try {
+						clickPiece(command.replace('p', ' ').trim());
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+		    	} else if (command.startsWith("m")) {
+		    		// in format "m(currentX),(currentY)>(newX),(newY)"
+		    		try {
+						makeMove(command.replace('m', ' ').trim(), false);
+					} catch (IOException e2) {
+						// TODO Auto-generated catch block
+						e2.printStackTrace();
+					}
+
+					
+
+
+		    	} else if (command.startsWith("j")) {
+		    		// in format "j(currentX),(currentY)>(newX),(newY)"
+		    		try {
+						makeMove(command.replace('j', ' ').trim(), true);
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+		    	}
+    		
+    	}
+
+
+    
+    
+    public void play() throws IOException
+    {
+    	String response;
+    	
+    	while(true)
+    	{
+    		response = in.readLine();
+    		System.out.println(response);
+    		if(response.startsWith("VALIDM"))
+    		{
+    			//b.actionPerformed();
+    			repaint();
+    		}
+    		else if (response.startsWith("VALIDP"))
+    		{
+    			
+    		}
+    		//out.println(response);
+    		//System.out.println(response);
+    	}
+    	
+    }
+    
+    public void log() throws IOException, ClassNotFoundException
+    {
+    		//pieces = piece;
+//    		if(is.available()!=0)
+//    		{
+//    			pieces = (Piece[][]) is.readObject();
+//    			repaint();
+//    		}
+    	
+    	
+//    	response = in.readLine();
+//
+//    	if(response.startsWith("PASS"))
+//    	{
+//    		
+//    		l.cPass = response;
+//    		l.confirmPass();
+//    		System.out.println("WORKS");
+//    		if(response.equals("VALIDM"))
+//    		{
+//    			
+//    		}
+//    		//play();
+//    	}
+//    	else if(response.startsWith("p"))
+//    	{
+//    		System.out.println(response);
+//    		clickPiece(response);
+//    	}
+//    	else if (response.startsWith("m"))
+//    	{
+//    		makeMove(response, false);
+//    	}
+//    	else if (response.startsWith("j"))
+//    	{
+//    		makeMove(response, true);
+//    	}
+    	
+    	
+//    	while(true)
+//    	{
+//    		response = in.readLine();
+//    		if(response.startsWith("PASS"))
+//    		{
+//    			
+//    		}
+//    		out.println(response);
+//    		//System.out.println(response);
+//    	}
+    }
+    
+    public void playAgain()
+    {
+    	
+    }
+    public synchronized void run()
+    {
+    	while(true)
+    	{
+    		System.out.println("hello");
+    		Piece[][] pieces;
+			try {
+				System.out.println(this.pieces);
+				pieces = (Piece[][]) is.readObject();
+	    		this.pieces = pieces;
+	    		repaint();
+			} catch (ClassNotFoundException | IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
     	}
     }
 
-	public Piece[][] getPieces() {
-		return pieces;
-	}
-
-	public boolean getYourTurn() {
+	public static void main(String[] args) throws UnknownHostException, IOException {
 		// TODO Auto-generated method stub
-		return yourTurn;
-	}
-
-	public boolean getControlsRed() {
-		// TODO Auto-generated method stub
-		return controlsRed;
+		l.Screen();
+		System.out.println(server);
+		//Board.initializeGui();
 	}
 }

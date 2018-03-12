@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.ServerSocket;
 import java.util.Scanner;
+import game.Gameboard;
 
 public class Server{
 	
@@ -14,14 +15,20 @@ public class Server{
 		sc = new Scanner(System.in);
 		System.out.println("Enter a port(1-9999)");
 		int i = sc.nextInt();
+	
+		while(i>9999)			
+		{
+			System.out.println("Please Enter Valid Port: ");
+			i = sc.nextInt();
+		}
 		ServerSocket listener = new ServerSocket(i);
         System.out.println("Checkers Server Is Running");
         System.out.println(Inet4Address.getLocalHost().getHostAddress());
         try {
         	while (true)
         	{
-        		Auth p1 = new Auth(listener.accept(), "P1");
-        		Auth p2 = new Auth(listener.accept(), "P2");
+        		Auth p1 = new Auth(listener.accept());
+        		Auth p2 = new Auth(listener.accept());
         		p1.start();
         		p2.start();
 //                Checkers ch = new Checkers();

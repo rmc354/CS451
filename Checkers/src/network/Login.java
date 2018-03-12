@@ -1,5 +1,6 @@
 package network;
 
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -14,11 +15,15 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 
 import javax.swing.AbstractButton;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+
+import checkers.Board;
 
 public class Login implements ActionListener{
 
@@ -27,8 +32,8 @@ public class Login implements ActionListener{
     private JPanel panel = new JPanel();
     private JLabel l = new JLabel("label");
     private JPanel jPanel = new JPanel();
-	protected String cPass;
-	protected char user;
+	public String cPass;
+	public char user;
 	
 	public Login()
 	{
@@ -37,7 +42,7 @@ public class Login implements ActionListener{
 	
 	public void Screen()
 	{
-		
+		JLabel check = new JLabel("Checkers");
 	    JButton host = new JButton("Host Game");
 	    host.setActionCommand("host");
 	    host.addActionListener(this);
@@ -45,15 +50,19 @@ public class Login implements ActionListener{
 	    join.setActionCommand("join");
 	    join.addActionListener((ActionListener) this);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(600, 600);
+        frame.setSize(300, 200);
         frame.setVisible(true);
         frame.setResizable(false);
+        panel.setLayout(new GridBagLayout());
+        panel.setAlignmentX(JComponent.CENTER_ALIGNMENT);
+        check.setText("Checkers");
         frame.add(panel);
+        panel.add(check);
         panel.add(host); 
         panel.add(join);
 	}
 	
-	public void HostGame() throws IOException
+	public void HostGame() throws IOException, ClassNotFoundException
 	{
 		user = 'h';
 		Server s = new Server();
@@ -64,13 +73,14 @@ public class Login implements ActionListener{
         hFrame.setResizable(false);
         String ip = JOptionPane.showInputDialog(null, "Enter IP Address", JOptionPane.QUESTION_MESSAGE);
         String port = JOptionPane.showInputDialog(null, "Enter Port Number", JOptionPane.QUESTION_MESSAGE);
-        String pass = JOptionPane.showInputDialog(null, "Set Server Password", JOptionPane.QUESTION_MESSAGE);
-        sendPass(pass);
+        //String pass = JOptionPane.showInputDialog(null, "Set Server Password", JOptionPane.QUESTION_MESSAGE);
+        //sendPass(pass);
         frame.setVisible(false);
         hFrame.setVisible(false);
         //cPass = s.auth.getPass();
-        Client client = new Client(ip, Integer.parseInt(port));
-        client.log();
+        Board board = new Board(true, true, ip, Integer.parseInt(port));
+        board.initializeGui(board);
+        //board.log();
 		
 		
 	}
@@ -82,7 +92,7 @@ public class Login implements ActionListener{
 			r.close();			
 	}
 	
-	public void JoinGame() throws UnknownHostException, IOException
+	public void JoinGame() throws UnknownHostException, IOException, ClassNotFoundException
 	{
 
 	    JButton j = new JButton("Join");
@@ -96,10 +106,13 @@ public class Login implements ActionListener{
         jFrame.setResizable(false);
 	    jFrame.add(jPanel);
 	    jPanel.add(j);
+	    frame.setVisible(false);
+        jFrame.setVisible(false);
 	    String ip = JOptionPane.showInputDialog(null, "Enter IP Address", JOptionPane.QUESTION_MESSAGE);
 	    String port = JOptionPane.showInputDialog(null, "Enter Port Number", JOptionPane.QUESTION_MESSAGE);
-        Client client = new Client(ip, Integer.parseInt(port));
-        client.log();
+        Board board = new Board(true, true, ip, Integer.parseInt(port));
+        board.initializeGui(board);
+        //board.log();
 	    //confirmPass();
 	   // System.out.println(auth.getPass());
 	   // System.out.println(auth.getPort());
@@ -137,6 +150,9 @@ public class Login implements ActionListener{
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
+			} catch (ClassNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
 			}
 			frame.setVisible(false);
 		}
@@ -148,6 +164,9 @@ public class Login implements ActionListener{
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (ClassNotFoundException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
