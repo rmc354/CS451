@@ -33,8 +33,6 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.xml.ws.Response;
 
-import network.Login;
-
 public class Board extends JPanel implements ActionListener, Serializable{
 	
     private String version = "1.01";
