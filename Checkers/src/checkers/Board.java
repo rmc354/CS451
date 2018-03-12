@@ -32,7 +32,7 @@ public class Board extends JPanel implements ActionListener{
     
     private Piece[][] pieces;
     
-    Board(boolean controlsRed, boolean goesFirst) {
+    public Board(boolean controlsRed, boolean goesFirst) {
     	yourTurn = goesFirst;
     	this.controlsRed = controlsRed;
     	pieces = new Piece[8][8];
@@ -353,4 +353,18 @@ public class Board extends JPanel implements ActionListener{
     		makeMove(command.replace('j', ' ').trim(), true);
     	}
     }
+
+	public Piece[][] getPieces() {
+		return pieces;
+	}
+
+	public boolean getYourTurn() {
+		// TODO Auto-generated method stub
+		return yourTurn;
+	}
+
+	public boolean getControlsRed() {
+		// TODO Auto-generated method stub
+		return controlsRed;
+	}
 }

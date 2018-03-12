@@ -9,7 +9,7 @@ public class Piece {
 	private int xPosition;
 	private int yPosition;
 	
-	Piece(boolean isRed, int _xPosition, int _yPosition) {
+	public Piece(boolean isRed, int _xPosition, int _yPosition) {
 		this.isRed = isRed;
 		isKinged = false;
 		xPosition = _xPosition;
@@ -166,5 +166,15 @@ public class Piece {
 			}
 		}
 		return false;
+	}
+
+	public boolean isKing() {
+		// TODO Auto-generated method stub
+		return isKinged;
+	}
+
+	public int[] getPosition() {
+		int[] pos = new int[] {xPosition, yPosition};
+		return pos;
 	}
 }
