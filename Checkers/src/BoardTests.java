@@ -1,5 +1,7 @@
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.Arrays;
+
 import org.junit.jupiter.api.Test;
 
 import checkers.Board;
@@ -21,8 +23,10 @@ class BoardTests {
 		//Call the setPiece function.
 		testBoard.setPieces(pieces);
 		
+		//Check if equal
+		boolean isEqual = Arrays.equals(pieces, testBoard.getPieces());
 		//Test the return of getPieces to pieces.
-		assertEquals(pieces,testBoard.getPieces());
+		assertEquals(true,isEqual);
 		
 	}
 	
