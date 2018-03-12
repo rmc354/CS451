@@ -35,10 +35,10 @@ import javax.xml.ws.Response;
 
 public class Board extends JPanel implements ActionListener, Serializable{
 	
-    private String version = "1.01";
+    private String version = "1.02";
 	
-    private static final int BOARD_SIDE = 400;
-    private static final int SQ_SIZE = 50;
+    private static final int BOARD_SIDE = 850;
+    private static final int SQ_SIZE = 100;
     
     private static final Color DARK_BOARD_COLOR = new Color(100, 50, 0);
     private static final Color LIGHT_BOARD_COLOR = new Color(245, 222, 179);
