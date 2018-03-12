@@ -39,8 +39,8 @@ public class Board extends JPanel implements ActionListener, Serializable{
 	
     private String version = "1.01";
 	
-    private static final int BOARD_SIDE = 850;
-    private static final int SQ_SIZE = 100;
+    private static final int BOARD_SIDE = 400;
+    private static final int SQ_SIZE = 50;
     
     private static final Color DARK_BOARD_COLOR = new Color(100, 50, 0);
     private static final Color LIGHT_BOARD_COLOR = new Color(245, 222, 179);
@@ -277,7 +277,7 @@ public class Board extends JPanel implements ActionListener, Serializable{
     	int x = Integer.parseInt(pos[0]);
     	int y = Integer.parseInt(pos[1]);
 		pieceClicked = true;
-		lastMoveWasJump = true;
+		lastMoveWasJump=false;
 		
     	int[] leftMoves = pieces[x][y].getLeftMove(x, y);
     	createMovePiece(x, y, leftMoves[0], leftMoves[1], true);
@@ -290,7 +290,16 @@ public class Board extends JPanel implements ActionListener, Serializable{
     	if (rightMoves.length > 2) {
         	createMovePiece(x, y, rightMoves[2], rightMoves[3], false);
     	}
-    	
+    	if (!existsButtonThatMatches("^m.*")) {
+    		System.out.println("no moves");
+        	endTurn();
+        	return;
+    	}
+    	if (!existsButtonThatMatches("^j.*")) {
+    		System.out.println("no moves");
+        	endTurn();
+        	return;
+    	}
     	endTurn();
     }
     private void clickPiece(String piece) {
@@ -370,11 +379,7 @@ public class Board extends JPanel implements ActionListener, Serializable{
     }
     
     private void endTurn() {
-    	if(lastMoveWasJump) {
-    		pieceClicked = false;
-    		lastMoveWasJump = false;
-    		return;
-    	}
+
     	pieceClicked = false;
     	yourTurn = false;
     	System.out.println("end turn\n"+controlsRed+" lastMoveWasJump: "+lastMoveWasJump);
