@@ -46,7 +46,6 @@ public class Board extends JPanel implements ActionListener, Serializable{
     boolean pieceClicked = false;
     static boolean yourTurn;
     static boolean controlsRed;
-    boolean lastMoveWasJump = false;
     
     private Piece[][] pieces;
     
@@ -222,12 +221,11 @@ public class Board extends JPanel implements ActionListener, Serializable{
     private void createMovePiece (int x, int y, int moveX, int moveY, boolean isLeftMove) {
     	if (moveX >= 0 && moveX < 8 && moveY >= 0 && moveY < 8) {
     		if (pieces[moveX][moveY] == null ) {
-    			if(!lastMoveWasJump) {
 	    			String pieceName = "m" + x + "," + y + ">" + moveX + "," + moveY;
 	    			// used in the actionlistener to determine what piece was clicked and what to do
 	    			
 	    			createPiece(moveX, moveY, "MovePiece.gif", pieceName, DARK_BOARD_COLOR);
-	    		}
+	    		
     		} else {
     			System.out.println(moveX + "," + moveY + " is NOT empty");
     			if (pieces[moveX][moveY]!=null && pieces[moveX][moveY].isRed() != pieces[x][y].isRed()) { 
@@ -269,34 +267,78 @@ public class Board extends JPanel implements ActionListener, Serializable{
     	}
     }
     
+    private void createJumpMovePiece (int x, int y, int moveX, int moveY, boolean isLeftMove) {
+    	if (moveX >= 0 && moveX < 8 && moveY >= 0 && moveY < 8) {
+    		if (pieces[moveX][moveY] == null ) {
+    			//do nothing
+	    		
+    		} 
+    		else {
+    			System.out.println(moveX + "," + moveY + " is NOT empty");
+    			if (pieces[moveX][moveY]!=null && pieces[moveX][moveY].isRed() != pieces[x][y].isRed()) { 
+    				// different colors
+    				
+    				if (isLeftMove) {
+    					int[] moves = pieces[x][y].getLeftMove(moveX, moveY);
+    					int jumpMoveX = moves[0];
+						int jumpMoveY = moves[1];
+						if (jumpMoveX >= 0 && jumpMoveX < 8 && jumpMoveY >= 0 && jumpMoveY < 8) {
+	    					if (((pieces[x][y].isRed() && moveY > y) || (pieces[x][y].isBlack() && moveY > y)) && moves.length > 2) {
+	    						// moving opposite left (king only)
+	    						jumpMoveX = moves[2];
+	    						jumpMoveY = moves[3];
+	    					}
+	    					if (pieces[jumpMoveX][jumpMoveY] == null) {
+	    		    			String pieceName = "j" + x + "," + y + ">" + jumpMoveX + "," + jumpMoveY;
+	    		    			createPiece(jumpMoveX, jumpMoveY, "MovePiece.gif", pieceName, DARK_BOARD_COLOR);
+							}
+						}
+    				} else {
+    					int[] moves = pieces[x][y].getRightMove(moveX, moveY);
+    					int jumpMoveX = moves[0];
+						int jumpMoveY = moves[1];
+						if (jumpMoveX >= 0 && jumpMoveX < 8 && jumpMoveY >= 0 && jumpMoveY < 8) {
+	    					if (((pieces[x][y].isRed() && moveY > y) || (pieces[x][y].isBlack() && moveY > y)) && moves.length > 2) {
+	    						// moving opposite right (king only)
+	    						jumpMoveX = moves[2];
+	    						jumpMoveY = moves[3];
+	    					}
+	    					if (pieces[jumpMoveX][jumpMoveY] == null) {
+	    		    			String pieceName = "j" + x + "," + y + ">" + jumpMoveX + "," + jumpMoveY;
+	    		    			createPiece(jumpMoveX, jumpMoveY, "MovePiece.gif", pieceName, DARK_BOARD_COLOR);
+							}
+						}
+    				}
+    			}
+    		}
+    	}
+    }
     private void jumpAgain(String piece) {
     	
     	String[] pos = piece.split(",");
     	int x = Integer.parseInt(pos[0]);
     	int y = Integer.parseInt(pos[1]);
 		pieceClicked = true;
-		lastMoveWasJump=false;
 		
     	int[] leftMoves = pieces[x][y].getLeftMove(x, y);
-    	createMovePiece(x, y, leftMoves[0], leftMoves[1], true);
+    	createJumpMovePiece(x, y, leftMoves[0], leftMoves[1], true);
     	if (leftMoves.length > 2) {
-        	createMovePiece(x, y, leftMoves[2], leftMoves[3], true);
+        	createJumpMovePiece(x, y, leftMoves[2], leftMoves[3], true);
     	}
     	
     	int[] rightMoves = pieces[x][y].getRightMove(x, y);
-    	createMovePiece(x, y, rightMoves[0], rightMoves[1], false);
+    	createJumpMovePiece(x, y, rightMoves[0], rightMoves[1], false);
     	if (rightMoves.length > 2) {
-        	createMovePiece(x, y, rightMoves[2], rightMoves[3], false);
+        	createJumpMovePiece(x, y, rightMoves[2], rightMoves[3], false);
     	}
-    	if (!existsButtonThatMatches("^m.*")) {
-    		System.out.println("no moves");
-        	endTurn();
-        	return;
-    	}
+
     	if (!existsButtonThatMatches("^j.*")) {
     		System.out.println("no moves");
         	endTurn();
         	return;
+    	}
+    	if (existsButtonThatMatches("^j.*")) {
+    		return;
     	}
     	endTurn();
     }
@@ -307,7 +349,7 @@ public class Board extends JPanel implements ActionListener, Serializable{
     	int y = Integer.parseInt(pos[1]);
     	
     	//if (true) {	// comment this and uncomment next line to run for real
-    	if (controlsRed == pieces[x][y].isRed() && yourTurn && !pieceClicked && !lastMoveWasJump) {
+    	if (controlsRed == pieces[x][y].isRed() && yourTurn && !pieceClicked) {
     		// only click correct color pieces
     		pieceClicked = true;
 	    	int[] leftMoves = pieces[x][y].getLeftMove(x, y);
@@ -321,7 +363,7 @@ public class Board extends JPanel implements ActionListener, Serializable{
 	    	if (rightMoves.length > 2) {
 	        	createMovePiece(x, y, rightMoves[2], rightMoves[3], false);
 	    	}
-	    	if (!existsButtonThatMatches("^m.*")) {
+	    	if (!existsButtonThatMatches("^m.*")&&!existsButtonThatMatches("^j.*")) {
 	    		System.out.println("no moves");
 	        	endTurn();
 	        	return;
@@ -364,7 +406,6 @@ public class Board extends JPanel implements ActionListener, Serializable{
     	}
     	else if (isJumpMove) {
     		repaint();
-    		lastMoveWasJump = true;
     		jumpAgain(moveX+","+moveY);
     		return;
     	}
@@ -377,11 +418,11 @@ public class Board extends JPanel implements ActionListener, Serializable{
     }
     
     private void endTurn() {
-
+    	repaint();
     	pieceClicked = false;
     	yourTurn = false;
-    	System.out.println("end turn\n"+controlsRed+" lastMoveWasJump: "+lastMoveWasJump);
-    	repaint();
+    	System.out.println("end turn\n"+controlsRed);
+    	
     }
     
     public void actionPerformed(ActionEvent e) {
@@ -417,6 +458,32 @@ public class Board extends JPanel implements ActionListener, Serializable{
     }
     
     public boolean gameOver() {
+    	boolean hasRedPiece = false;
+    	boolean hasBlackPiece = false;
+    	for (Piece[] row : pieces) {
+    		for (Piece piece : row) {
+    			if (piece != null) {
+    				if (piece.isRed()) {
+    					hasRedPiece = true;
+    				} else {
+    					hasBlackPiece = true;
+    				}
+    			}
+    		}
+    	}
+    	if(!hasRedPiece) {
+    		System.out.println("Black wins");
+    		return true;
+    	}
+    	if(!hasBlackPiece) {
+    		System.out.println("Red wins");
+    		return true;
+    	}
+    	return false;
+    }
+    
+    /*
+    public boolean gameOver() {
     	boolean redNoMoves = false;
     	boolean blackNoMoves = false;
     	boolean hasRedPiece = false;
@@ -451,7 +518,7 @@ public class Board extends JPanel implements ActionListener, Serializable{
     	}
     	return false;
     }
-
+*/
 	public void refresh() {
 		repaint();
     	System.out.println("refreshed");
